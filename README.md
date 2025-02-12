@@ -1,7 +1,5 @@
 # Poaching-Identification-and-Response-System-Using-Deep-Learning-and-Reinforcement-Learning
 
-# Elephant Detection Project
-
 An advanced computer vision project focused on detecting elephants in images using a trained model.
 
 ## Overview
