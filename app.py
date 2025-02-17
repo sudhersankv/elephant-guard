@@ -1,26 +1,20 @@
 import os
-os.environ["KMP_DUPLICATE_LIB_OK"] = "True"  # Set before other imports
-
+os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 import gradio as gr
 from ultralytics import YOLO
 import cv2
 import numpy as np
 from PIL import Image
 import time
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 
-# Path to your trained YOLO model
+# Path to trained YOLO model
 MODEL_PATH = "runs/detect/train7/weights/best.pt"
 
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(f"Model not found at `{MODEL_PATH}`. Please ensure the model path is correct.")
 
 # Load the YOLO model
-def load_model(model_path):
-    return YOLO(model_path)
-
-model = load_model(MODEL_PATH)
+model = YOLO(MODEL_PATH)
 
 def annotate_image(image, detections, min_conf):
     count = 0
@@ -52,42 +46,24 @@ def detect_elephants(image, min_conf):
     annotated_pil = Image.fromarray(annotated_image)
     
     return annotated_pil, total_count, round(inference_time, 2)
+# Load poached elephant images
+poached_images = ["D:\elephant-guard\img\er2.jpg", "D:\elephant-guard\img\er3.jpg", "D:\elephant-guard\img\er4.jpg", "D:\elephant-guard\img\er5.jpg"]
+loaded_poached_images = [Image.open(img) for img in poached_images if os.path.exists(img)]
 
-# Poached Elephant Images (ensure these images exist in your working directory)
-poached_images = [
-    "er2.jpg",
-    "er3.jpg",
-    "er4.jpg",
-    "er5.jpg"
-]
+# Custom CSS styling
+custom_css = """
+body {
+    background-color: white !important;
+    color: black !important;
+}
+.gallery {
+    background: white !important;
+}
+"""
 
-# Load images (with a check to warn if an image file is missing)
-loaded_poached_images = []
-for img_path in poached_images:
-    if os.path.exists(img_path):
-        loaded_poached_images.append(Image.open(img_path))
-    else:
-        print(f"Warning: {img_path} not found.")
-
-# Create a Matplotlib animation for the poached images if any are loaded
-if loaded_poached_images:
-    fig, ax = plt.subplots()
-    
-    def update(frame):
-        ax.clear()
-        ax.imshow(loaded_poached_images[frame])
-        ax.axis('off')  # Hide axes
-        
-    ani = animation.FuncAnimation(fig, update, frames=len(loaded_poached_images), interval=2000, repeat=True)
-    plt.show(block=False)  # Non-blocking display
-
-# Project Documentation
+# Project documentation
 project_docs = """
-## 🐘 **ElephantGuard: AI-Powered Poaching Prevention**
 
-*"For our elephants, for their future."*
-
----
 
 ### **📌 Project Description**
 ElephantGuard is an **AI-powered conservation system** designed to **detect, track, and prevent poaching** in wildlife reserves using computer vision and reinforcement learning. The system leverages **drone-based aerial imagery** to **identify elephants and potential poaching threats in real-time**, significantly reducing the cost and inefficiencies of traditional **manual surveys** conducted via helicopters or planes. 
@@ -122,21 +98,6 @@ By integrating advanced deep learning models with **multi-agent reinforcement le
 3. Implement **heatmap analysis** for optimizing patrol routes
 4. Expand detection capabilities to include **vehicles & poaching activities**
 
----
-
-### **👥 Meet the Team**
-<center>
-
-| Name  | Image |
-|---|---|
-| **Sudhersan K V**  | ![Sudhersan](sudhersan_image.jpg) |
-| **Karthikeyan S**  | ![Karthikeyan](karthikeyan_image.jpg) |
-
-**Both are M.S. in Computer Science students at Arizona State University.**
-
-</center>
-
----
 
 ### **🌍 How You Can Help**
 We’re actively looking for:
@@ -148,28 +109,27 @@ We’re actively looking for:
 📂 [GitHub Repository](https://github.com/sudhersankv/elephant-guard)
 """
 
-# Custom CSS for a white background and dark text
-custom_css = """
-body {
-    background-color: white !important;
-    color: black !important;
-}
-"""
-
-# Build the Gradio Interface within a single Blocks container
+# Create Gradio interface
 with gr.Blocks(css=custom_css) as demo:
     gr.Markdown("# <center>🐘 ElephantGuard</center>")
     gr.Markdown("### <center>AI Conservation System for Elephant Protection</center>")
     
     with gr.Tabs():
-        with gr.TabItem("Poaching Crisis"):
-            gr.Markdown("## **💔 The Tragic Reality of Elephant Poaching**")
+        with gr.TabItem("About"):
+            
+            
+            # Poached elephants gallery
+            gr.Markdown("## 💔 The Tragic Reality of Elephant Poaching")
             gr.Markdown("### *Silent giants, stolen too soon...*")
-            gr.Gallery(loaded_poached_images if loaded_poached_images else poached_images,
-                       label="Poached Elephants", height=400, preview=True, allow_preview=True)
-        
-        with gr.TabItem("Project Overview"):
+            gr.Gallery(
+                value=loaded_poached_images,
+                label="Poached Elephants",
+                height=400,
+                preview=True,
+                allow_preview=True
+            )
             gr.Markdown(project_docs)
+
         
         with gr.TabItem("Live Detection"):
             gr.Markdown("### **🔍 Upload an Aerial Image for Elephant Detection**")
@@ -185,17 +145,19 @@ with gr.Blocks(css=custom_css) as demo:
                         count_box = gr.Textbox(label="Elephants Detected")
                         time_box = gr.Textbox(label="Processing Time")
             
-            detect_btn.click(fn=detect_elephants,
-                             inputs=[upload_box, min_conf_slider],
-                             outputs=[output_image, count_box, time_box])
+            detect_btn.click(
+                fn=detect_elephants,
+                inputs=[upload_box, min_conf_slider],
+                outputs=[output_image, count_box, time_box]
+            )
             
             gr.Markdown("### 📂 **Access Sample Detection Images**")
             gr.HTML("""
-            <a href='https://www.dropbox.com/scl/fo/your-sample-link-here' target='_blank'>
+            <a href='https://www.dropbox.com/scl/fo/pvnc5nsdejvt1mhco0z8b/AI6jtnbv5s5b4aCCS-o-fxI?rlkey=181rn6o9uuyo8gqsihtqwhefj&st=qkqsyijs&dl=0' target='_blank'>
                 <img src='https://upload.wikimedia.org/wikipedia/commons/7/72/Dropbox_logo_2017.png' 
                      alt='Dropbox' width='120'>
             </a>
             """)
 
-# Launch the Gradio app
-demo.launch()
+if __name__ == "__main__":
+    demo.launch()
